@@ -55,7 +55,7 @@ def further_normalize_ast(node):
     """Normalize AST structure with safe access patterns"""
     normalized = {
         "operation": node.get("operation", "query"),
-        "name": (node.get("name") or {}).get("value", "AnonymousOperation"),
+        "name": (node.get("name") or {}).get("value", "query"),
         "arguments": {
             arg["name"]["value"]: arg["value"]["value"] 
             for arg in node.get("arguments", [])

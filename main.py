@@ -63,13 +63,16 @@ def main():
 
                 # Step 3: Convert ASTs to Graphs
                 graph1_path, graph2_path = process_normalized_asts(n1_ast_path, n2_ast_path, row_dir)
+               
+                                                                
 
                 # Step 4: Build and Visualize Graphs
-                process_and_visualize_ast(n1_ast_path, graph1_path, os.path.join(row_dir, "graph1_visualization.png"))
-                process_and_visualize_ast(n2_ast_path, graph2_path, os.path.join(row_dir, "graph2_visualization.png"))
+               
+                process_and_visualize_ast(n1_ast_path, os.path.join(row_dir, "graph-1.json"), os.path.join(row_dir, "graph1_visualization.png"))
+                process_and_visualize_ast(n2_ast_path, os.path.join(row_dir, "graph-2.json"), os.path.join(row_dir, "graph2_visualization.png"))
 
                 # Step 5: Detect and Remove Cycles in Graphs
-                process_graphs(graph1_path, graph2_path, row_dir)
+                process_graphs(os.path.join(row_dir, "graph-1.json"), os.path.join(row_dir, "graph-1.json"), row_dir)
 
                 # Step 6: Optimizing Query 2 Based on Schema Validation
                 schema_path = os.path.join(row_dir, "schema.graphql")

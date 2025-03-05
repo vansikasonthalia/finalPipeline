@@ -137,8 +137,8 @@ def process_normalized_asts(n1_ast_file, n2_ast_file, output_dir):
         graph1 = ast_to_graph_json(normalized_query1_ast)
         graph2 = ast_to_graph_json(normalized_query2_ast)
 
-        graph1_path = os.path.join(output_dir, "graph-1.json")
-        graph2_path = os.path.join(output_dir, "graph-2.json")
+        graph1_path = os.path.join(output_dir, "graph1.json")
+        graph2_path = os.path.join(output_dir, "graph2.json")
 
         save_graph_to_json(graph1, graph1_path)
         save_graph_to_json(graph2, graph2_path)
