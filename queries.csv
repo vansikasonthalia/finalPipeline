@@ -1,0 +1,3610 @@
+schema,query1,query2,
+"scalar DateTime
+
+directive @dbquery(type: String, table: String, configuration: String, query: String, dml: String) on FIELD_DEFINITION
+directive @materializer(query: String) on FIELD_DEFINITION
+
+type Comments {
+  content: String!
+  created_at: DateTime
+  id: Int!
+  post_id: Int!
+  posts: Posts
+  user_id: Int!
+  users: Users
+}
+
+type Posts {
+  comments: [Comments]
+  content: String!
+  created_at: DateTime
+  id: Int!
+  title: String
+  user_id: Int!
+  users: Users
+}
+
+type Users {
+  comments: [Comments]
+  created_at: DateTime
+  email: String!
+  id: Int!
+  posts: [Posts]
+  username: String!
+  userEducation: UserEducation
+  userFollowers: [UserFollowers]
+}
+
+type UserEducation {
+  degree: String!
+  id: Int!
+  institution: String!
+  user_id: Int!
+  users: Users 
+}
+
+type UserFollowers {
+  follower_id: Int!
+  id: Int!
+  user_id: Int!
+}
+
+type Query {
+  # Queries for 'Comments'
+  comments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsList: [Comments] @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsPaginatedList(first: Int!, after: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_1(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE post_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_2(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Posts'
+  posts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsList: [Posts] @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsPaginatedList(first: Int!, after: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  postsUsinguser_id(user_id: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Users'
+  usersById(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  users(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersList: [Users] @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersPaginatedList(first: Int!, after: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  usersUsingusername(username: String!): Users
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE username = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdRange(lowerId: Int!, upperId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id BETWEEN ? AND ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdLessThan(maxId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id < ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'UserEducation'
+  userEducation(id: Int!): UserEducation @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationList: [UserEducation] @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationPaginatedList(first: Int!, after: Int!): [UserEducation]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT degree, id, institution, user_id FROM UserEducation ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+
+  # Queries for 'UserFollowers'
+  userFollowers(id: Int!): UserFollowers @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersList: [UserFollowers] @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersPaginatedList(first: Int!, after: Int!): [UserFollowers]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT follower_id, id, user_id FROM UserFollowers ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+}
+
+type Mutation {
+  # Mutations for 'Comments'
+  deleteComments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", dml: DELETE, configuration: ""mysql_config"")
+  insertComments(post_id: Int!, user_id: Int!, content: String!): Comments
+    @dbquery(type: ""mysql"", table: ""comments"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Posts'
+  deletePosts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", dml: DELETE, configuration: ""mysql_config"")
+  insertPosts(user_id: Int!, content: String!, title: String!): Posts
+    @dbquery(type: ""mysql"", table: ""posts"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Users'
+  deleteUsers(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", dml: DELETE, configuration: ""mysql_config"")
+  insertUsers(email: String!, username: String!): Users
+    @dbquery(type: ""mysql"", table: ""users"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'UserEducation'
+  deleteUserEducation(id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserEducation(degree: String!, institution: String!, user_id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+
+  # Mutations for 'UserFollowers'
+  deleteUserFollowers(id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserFollowers(follower_id: Int!, user_id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+}","query MyQuery {
+  users(id: 10) {
+    email
+    id
+    posts {
+      content
+      id
+      users {
+        email
+        id
+        posts {
+          content
+          id
+        }
+      }
+    }
+  }
+}","query MyQuery2 {
+  users(id: 10) {
+    email
+    id
+    posts {
+      content
+      id
+     
+    }
+  }
+}",
+"scalar DateTime
+
+directive @dbquery(type: String, table: String, configuration: String, query: String, dml: String) on FIELD_DEFINITION
+directive @materializer(query: String) on FIELD_DEFINITION
+
+type Comments {
+  content: String!
+  created_at: DateTime
+  id: Int!
+  post_id: Int!
+  posts: Posts
+  user_id: Int!
+  users: Users
+}
+
+type Posts {
+  comments: [Comments]
+  content: String!
+  created_at: DateTime
+  id: Int!
+  title: String
+  user_id: Int!
+  users: Users
+}
+
+type Users {
+  comments: [Comments]
+  created_at: DateTime
+  email: String!
+  id: Int!
+  posts: [Posts]
+  username: String!
+  userEducation: UserEducation
+  userFollowers: [UserFollowers]
+}
+
+type UserEducation {
+  degree: String!
+  id: Int!
+  institution: String!
+  user_id: Int!
+  users: Users 
+}
+
+type UserFollowers {
+  follower_id: Int!
+  id: Int!
+  user_id: Int!
+}
+
+type Query {
+  # Queries for 'Comments'
+  comments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsList: [Comments] @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsPaginatedList(first: Int!, after: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_1(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE post_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_2(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Posts'
+  posts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsList: [Posts] @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsPaginatedList(first: Int!, after: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  postsUsinguser_id(user_id: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Users'
+  usersById(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  users(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersList: [Users] @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersPaginatedList(first: Int!, after: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  usersUsingusername(username: String!): Users
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE username = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdRange(lowerId: Int!, upperId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id BETWEEN ? AND ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdLessThan(maxId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id < ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'UserEducation'
+  userEducation(id: Int!): UserEducation @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationList: [UserEducation] @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationPaginatedList(first: Int!, after: Int!): [UserEducation]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT degree, id, institution, user_id FROM UserEducation ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+
+  # Queries for 'UserFollowers'
+  userFollowers(id: Int!): UserFollowers @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersList: [UserFollowers] @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersPaginatedList(first: Int!, after: Int!): [UserFollowers]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT follower_id, id, user_id FROM UserFollowers ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+}
+
+type Mutation {
+  # Mutations for 'Comments'
+  deleteComments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", dml: DELETE, configuration: ""mysql_config"")
+  insertComments(post_id: Int!, user_id: Int!, content: String!): Comments
+    @dbquery(type: ""mysql"", table: ""comments"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Posts'
+  deletePosts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", dml: DELETE, configuration: ""mysql_config"")
+  insertPosts(user_id: Int!, content: String!, title: String!): Posts
+    @dbquery(type: ""mysql"", table: ""posts"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Users'
+  deleteUsers(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", dml: DELETE, configuration: ""mysql_config"")
+  insertUsers(email: String!, username: String!): Users
+    @dbquery(type: ""mysql"", table: ""users"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'UserEducation'
+  deleteUserEducation(id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserEducation(degree: String!, institution: String!, user_id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+
+  # Mutations for 'UserFollowers'
+  deleteUserFollowers(id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserFollowers(follower_id: Int!, user_id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+}","query MyQuery {
+  users(id: 1) {
+    id
+    username
+    userFollowers {
+      id
+      follower_id
+      user_id
+    }
+  }
+}","query MyQuery2 {
+  users(id: 1) {
+    id
+    username
+    userFollowers {
+      id
+      
+      user_id
+    }
+  }
+}",
+"scalar DateTime
+
+directive @dbquery(type: String, table: String, configuration: String, query: String, dml: String) on FIELD_DEFINITION
+directive @materializer(query: String) on FIELD_DEFINITION
+
+type Comments {
+  content: String!
+  created_at: DateTime
+  id: Int!
+  post_id: Int!
+  posts: Posts
+  user_id: Int!
+  users: Users
+}
+
+type Posts {
+  comments: [Comments]
+  content: String!
+  created_at: DateTime
+  id: Int!
+  title: String
+  user_id: Int!
+  users: Users
+}
+
+type Users {
+  comments: [Comments]
+  created_at: DateTime
+  email: String!
+  id: Int!
+  posts: [Posts]
+  username: String!
+  userEducation: UserEducation
+  userFollowers: [UserFollowers]
+}
+
+type UserEducation {
+  degree: String!
+  id: Int!
+  institution: String!
+  user_id: Int!
+  users: Users 
+}
+
+type UserFollowers {
+  follower_id: Int!
+  id: Int!
+  user_id: Int!
+}
+
+type Query {
+  # Queries for 'Comments'
+  comments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsList: [Comments] @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsPaginatedList(first: Int!, after: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_1(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE post_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_2(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Posts'
+  posts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsList: [Posts] @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsPaginatedList(first: Int!, after: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  postsUsinguser_id(user_id: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Users'
+  usersById(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  users(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersList: [Users] @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersPaginatedList(first: Int!, after: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  usersUsingusername(username: String!): Users
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE username = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdRange(lowerId: Int!, upperId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id BETWEEN ? AND ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdLessThan(maxId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id < ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'UserEducation'
+  userEducation(id: Int!): UserEducation @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationList: [UserEducation] @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationPaginatedList(first: Int!, after: Int!): [UserEducation]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT degree, id, institution, user_id FROM UserEducation ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+
+  # Queries for 'UserFollowers'
+  userFollowers(id: Int!): UserFollowers @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersList: [UserFollowers] @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersPaginatedList(first: Int!, after: Int!): [UserFollowers]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT follower_id, id, user_id FROM UserFollowers ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+}
+
+type Mutation {
+  # Mutations for 'Comments'
+  deleteComments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", dml: DELETE, configuration: ""mysql_config"")
+  insertComments(post_id: Int!, user_id: Int!, content: String!): Comments
+    @dbquery(type: ""mysql"", table: ""comments"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Posts'
+  deletePosts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", dml: DELETE, configuration: ""mysql_config"")
+  insertPosts(user_id: Int!, content: String!, title: String!): Posts
+    @dbquery(type: ""mysql"", table: ""posts"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Users'
+  deleteUsers(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", dml: DELETE, configuration: ""mysql_config"")
+  insertUsers(email: String!, username: String!): Users
+    @dbquery(type: ""mysql"", table: ""users"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'UserEducation'
+  deleteUserEducation(id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserEducation(degree: String!, institution: String!, user_id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+
+  # Mutations for 'UserFollowers'
+  deleteUserFollowers(id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserFollowers(follower_id: Int!, user_id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+}","query MyQuery{
+  users(id: 1) {
+    id
+    username
+    email
+  }
+}","query MyQuery {
+  usersById(id: 1) {
+    id
+    username
+    email
+    posts {
+      id
+      title
+    }
+  }
+}",
+"scalar DateTime
+
+directive @dbquery(type: String, table: String, configuration: String, query: String, dml: String) on FIELD_DEFINITION
+directive @materializer(query: String) on FIELD_DEFINITION
+
+type Comments {
+  content: String!
+  created_at: DateTime
+  id: Int!
+  post_id: Int!
+  posts: Posts
+  user_id: Int!
+  users: Users
+}
+
+type Posts {
+  comments: [Comments]
+  content: String!
+  created_at: DateTime
+  id: Int!
+  title: String
+  user_id: Int!
+  users: Users
+}
+
+type Users {
+  comments: [Comments]
+  created_at: DateTime
+  email: String!
+  id: Int!
+  posts: [Posts]
+  username: String!
+  userEducation: UserEducation
+  userFollowers: [UserFollowers]
+}
+
+type UserEducation {
+  degree: String!
+  id: Int!
+  institution: String!
+  user_id: Int!
+  users: Users 
+}
+
+type UserFollowers {
+  follower_id: Int!
+  id: Int!
+  user_id: Int!
+}
+
+type Query {
+  # Queries for 'Comments'
+  comments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsList: [Comments] @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsPaginatedList(first: Int!, after: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_1(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE post_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_2(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Posts'
+  posts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsList: [Posts] @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsPaginatedList(first: Int!, after: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  postsUsinguser_id(user_id: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Users'
+  usersById(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  users(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersList: [Users] @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersPaginatedList(first: Int!, after: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  usersUsingusername(username: String!): Users
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE username = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdRange(lowerId: Int!, upperId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id BETWEEN ? AND ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdLessThan(maxId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id < ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'UserEducation'
+  userEducation(id: Int!): UserEducation @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationList: [UserEducation] @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationPaginatedList(first: Int!, after: Int!): [UserEducation]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT degree, id, institution, user_id FROM UserEducation ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+
+  # Queries for 'UserFollowers'
+  userFollowers(id: Int!): UserFollowers @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersList: [UserFollowers] @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersPaginatedList(first: Int!, after: Int!): [UserFollowers]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT follower_id, id, user_id FROM UserFollowers ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+}
+
+type Mutation {
+  # Mutations for 'Comments'
+  deleteComments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", dml: DELETE, configuration: ""mysql_config"")
+  insertComments(post_id: Int!, user_id: Int!, content: String!): Comments
+    @dbquery(type: ""mysql"", table: ""comments"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Posts'
+  deletePosts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", dml: DELETE, configuration: ""mysql_config"")
+  insertPosts(user_id: Int!, content: String!, title: String!): Posts
+    @dbquery(type: ""mysql"", table: ""posts"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Users'
+  deleteUsers(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", dml: DELETE, configuration: ""mysql_config"")
+  insertUsers(email: String!, username: String!): Users
+    @dbquery(type: ""mysql"", table: ""users"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'UserEducation'
+  deleteUserEducation(id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserEducation(degree: String!, institution: String!, user_id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+
+  # Mutations for 'UserFollowers'
+  deleteUserFollowers(id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserFollowers(follower_id: Int!, user_id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+}","query MyQuery {
+  users(id: 10) {
+    posts {
+      content
+      id
+    }
+    username
+  }
+}","query MyQuery2 {
+  users(id: 10) {
+    username
+  }
+  posts(id: 10) {
+    content
+    id
+  }
+}",
+"scalar DateTime
+
+directive @dbquery(type: String, table: String, configuration: String, query: String, dml: String) on FIELD_DEFINITION
+directive @materializer(query: String) on FIELD_DEFINITION
+
+type Comments {
+  content: String!
+  created_at: DateTime
+  id: Int!
+  post_id: Int!
+  posts: Posts
+  user_id: Int!
+  users: Users
+}
+
+type Posts {
+  comments: [Comments]
+  content: String!
+  created_at: DateTime
+  id: Int!
+  title: String
+  user_id: Int!
+  users: Users
+}
+
+type Users {
+  comments: [Comments]
+  created_at: DateTime
+  email: String!
+  id: Int!
+  posts: [Posts]
+  username: String!
+  userEducation: UserEducation
+  userFollowers: [UserFollowers]
+}
+
+type UserEducation {
+  degree: String!
+  id: Int!
+  institution: String!
+  user_id: Int!
+  users: Users 
+}
+
+type UserFollowers {
+  follower_id: Int!
+  id: Int!
+  user_id: Int!
+}
+
+type Query {
+  # Queries for 'Comments'
+  comments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsList: [Comments] @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsPaginatedList(first: Int!, after: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_1(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE post_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_2(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Posts'
+  posts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsList: [Posts] @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsPaginatedList(first: Int!, after: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  postsUsinguser_id(user_id: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Users'
+  usersById(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  users(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersList: [Users] @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersPaginatedList(first: Int!, after: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  usersUsingusername(username: String!): Users
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE username = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdRange(lowerId: Int!, upperId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id BETWEEN ? AND ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdLessThan(maxId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id < ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'UserEducation'
+  userEducation(id: Int!): UserEducation @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationList: [UserEducation] @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationPaginatedList(first: Int!, after: Int!): [UserEducation]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT degree, id, institution, user_id FROM UserEducation ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+
+  # Queries for 'UserFollowers'
+  userFollowers(id: Int!): UserFollowers @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersList: [UserFollowers] @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersPaginatedList(first: Int!, after: Int!): [UserFollowers]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT follower_id, id, user_id FROM UserFollowers ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+}
+
+type Mutation {
+  # Mutations for 'Comments'
+  deleteComments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", dml: DELETE, configuration: ""mysql_config"")
+  insertComments(post_id: Int!, user_id: Int!, content: String!): Comments
+    @dbquery(type: ""mysql"", table: ""comments"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Posts'
+  deletePosts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", dml: DELETE, configuration: ""mysql_config"")
+  insertPosts(user_id: Int!, content: String!, title: String!): Posts
+    @dbquery(type: ""mysql"", table: ""posts"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Users'
+  deleteUsers(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", dml: DELETE, configuration: ""mysql_config"")
+  insertUsers(email: String!, username: String!): Users
+    @dbquery(type: ""mysql"", table: ""users"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'UserEducation'
+  deleteUserEducation(id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserEducation(degree: String!, institution: String!, user_id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+
+  # Mutations for 'UserFollowers'
+  deleteUserFollowers(id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserFollowers(follower_id: Int!, user_id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+}","query MyQuery {
+  users(id: 10) {
+    details: posts {
+      content
+      id
+    }
+    username
+  }
+}","query MyQuery2 {
+  users(id: 10) {
+    username
+  }
+  posts(id: 10) {
+    content
+    id
+  }
+}",
+"scalar DateTime
+
+directive @dbquery(type: String, table: String, configuration: String, query: String, dml: String) on FIELD_DEFINITION
+directive @materializer(query: String) on FIELD_DEFINITION
+
+type Comments {
+  content: String!
+  created_at: DateTime
+  id: Int!
+  post_id: Int!
+  posts: Posts
+  user_id: Int!
+  users: Users
+}
+
+type Posts {
+  comments: [Comments]
+  content: String!
+  created_at: DateTime
+  id: Int!
+  title: String
+  user_id: Int!
+  users: Users
+}
+
+type Users {
+  comments: [Comments]
+  created_at: DateTime
+  email: String!
+  id: Int!
+  posts: [Posts]
+  username: String!
+  userEducation: UserEducation
+  userFollowers: [UserFollowers]
+}
+
+type UserEducation {
+  degree: String!
+  id: Int!
+  institution: String!
+  user_id: Int!
+  users: Users 
+}
+
+type UserFollowers {
+  follower_id: Int!
+  id: Int!
+  user_id: Int!
+}
+
+type Query {
+  # Queries for 'Comments'
+  comments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsList: [Comments] @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsPaginatedList(first: Int!, after: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_1(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE post_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_2(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Posts'
+  posts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsList: [Posts] @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsPaginatedList(first: Int!, after: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  postsUsinguser_id(user_id: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Users'
+  usersById(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  users(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersList: [Users] @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersPaginatedList(first: Int!, after: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  usersUsingusername(username: String!): Users
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE username = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdRange(lowerId: Int!, upperId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id BETWEEN ? AND ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdLessThan(maxId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id < ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'UserEducation'
+  userEducation(id: Int!): UserEducation @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationList: [UserEducation] @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationPaginatedList(first: Int!, after: Int!): [UserEducation]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT degree, id, institution, user_id FROM UserEducation ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+
+  # Queries for 'UserFollowers'
+  userFollowers(id: Int!): UserFollowers @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersList: [UserFollowers] @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersPaginatedList(first: Int!, after: Int!): [UserFollowers]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT follower_id, id, user_id FROM UserFollowers ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+}
+
+type Mutation {
+  # Mutations for 'Comments'
+  deleteComments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", dml: DELETE, configuration: ""mysql_config"")
+  insertComments(post_id: Int!, user_id: Int!, content: String!): Comments
+    @dbquery(type: ""mysql"", table: ""comments"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Posts'
+  deletePosts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", dml: DELETE, configuration: ""mysql_config"")
+  insertPosts(user_id: Int!, content: String!, title: String!): Posts
+    @dbquery(type: ""mysql"", table: ""posts"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Users'
+  deleteUsers(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", dml: DELETE, configuration: ""mysql_config"")
+  insertUsers(email: String!, username: String!): Users
+    @dbquery(type: ""mysql"", table: ""users"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'UserEducation'
+  deleteUserEducation(id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserEducation(degree: String!, institution: String!, user_id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+
+  # Mutations for 'UserFollowers'
+  deleteUserFollowers(id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserFollowers(follower_id: Int!, user_id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+}","query MyQuery {
+  users(id: 10) {
+    details: posts {
+      content
+      id
+    }
+    username
+  }
+}","query MyQuery2 {
+  users(id: 10) {
+    username
+    email
+  }
+  posts(id: 10) {
+    content
+    id
+    title
+  }
+}",
+"scalar DateTime
+
+directive @dbquery(type: String, table: String, configuration: String, query: String, dml: String) on FIELD_DEFINITION
+directive @materializer(query: String) on FIELD_DEFINITION
+
+type Comments {
+  content: String!
+  created_at: DateTime
+  id: Int!
+  post_id: Int!
+  posts: Posts
+  user_id: Int!
+  users: Users
+}
+
+type Posts {
+  comments: [Comments]
+  content: String!
+  created_at: DateTime
+  id: Int!
+  title: String
+  user_id: Int!
+  users: Users
+}
+
+type Users {
+  comments: [Comments]
+  created_at: DateTime
+  email: String!
+  id: Int!
+  posts: [Posts]
+  username: String!
+  userEducation: UserEducation
+  userFollowers: [UserFollowers]
+}
+
+type UserEducation {
+  degree: String!
+  id: Int!
+  institution: String!
+  user_id: Int!
+  users: Users 
+}
+
+type UserFollowers {
+  follower_id: Int!
+  id: Int!
+  user_id: Int!
+}
+
+type Query {
+  # Queries for 'Comments'
+  comments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsList: [Comments] @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsPaginatedList(first: Int!, after: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_1(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE post_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_2(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Posts'
+  posts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsList: [Posts] @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsPaginatedList(first: Int!, after: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  postsUsinguser_id(user_id: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Users'
+  usersById(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  users(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersList: [Users] @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersPaginatedList(first: Int!, after: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  usersUsingusername(username: String!): Users
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE username = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdRange(lowerId: Int!, upperId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id BETWEEN ? AND ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdLessThan(maxId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id < ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'UserEducation'
+  userEducation(id: Int!): UserEducation @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationList: [UserEducation] @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationPaginatedList(first: Int!, after: Int!): [UserEducation]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT degree, id, institution, user_id FROM UserEducation ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+
+  # Queries for 'UserFollowers'
+  userFollowers(id: Int!): UserFollowers @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersList: [UserFollowers] @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersPaginatedList(first: Int!, after: Int!): [UserFollowers]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT follower_id, id, user_id FROM UserFollowers ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+}
+
+type Mutation {
+  # Mutations for 'Comments'
+  deleteComments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", dml: DELETE, configuration: ""mysql_config"")
+  insertComments(post_id: Int!, user_id: Int!, content: String!): Comments
+    @dbquery(type: ""mysql"", table: ""comments"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Posts'
+  deletePosts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", dml: DELETE, configuration: ""mysql_config"")
+  insertPosts(user_id: Int!, content: String!, title: String!): Posts
+    @dbquery(type: ""mysql"", table: ""posts"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Users'
+  deleteUsers(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", dml: DELETE, configuration: ""mysql_config"")
+  insertUsers(email: String!, username: String!): Users
+    @dbquery(type: ""mysql"", table: ""users"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'UserEducation'
+  deleteUserEducation(id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserEducation(degree: String!, institution: String!, user_id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+
+  # Mutations for 'UserFollowers'
+  deleteUserFollowers(id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserFollowers(follower_id: Int!, user_id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+}","query MyQuery {
+  users(id: 3) {
+    id
+    username
+    posts {
+      id
+      title
+    }
+  }
+}","query MyQuery2 {
+  usersById(id: 3) {
+    id
+    username
+    postsUsinguser_id(user_id: 3) {
+      id
+      title
+    }
+  }
+}",
+"scalar DateTime
+
+directive @dbquery(type: String, table: String, configuration: String, query: String, dml: String) on FIELD_DEFINITION
+directive @materializer(query: String) on FIELD_DEFINITION
+
+type Comments {
+  content: String!
+  created_at: DateTime
+  id: Int!
+  post_id: Int!
+  posts: Posts
+  user_id: Int!
+  users: Users
+}
+
+type Posts {
+  comments: [Comments]
+  content: String!
+  created_at: DateTime
+  id: Int!
+  title: String
+  user_id: Int!
+  users: Users
+}
+
+type Users {
+  comments: [Comments]
+  created_at: DateTime
+  email: String!
+  id: Int!
+  posts: [Posts]
+  username: String!
+  userEducation: UserEducation
+  userFollowers: [UserFollowers]
+}
+
+type UserEducation {
+  degree: String!
+  id: Int!
+  institution: String!
+  user_id: Int!
+  users: Users 
+}
+
+type UserFollowers {
+  follower_id: Int!
+  id: Int!
+  user_id: Int!
+}
+
+type Query {
+  # Queries for 'Comments'
+  comments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsList: [Comments] @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsPaginatedList(first: Int!, after: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_1(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE post_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_2(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Posts'
+  posts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsList: [Posts] @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsPaginatedList(first: Int!, after: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  postsUsinguser_id(user_id: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Users'
+  usersById(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  users(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersList: [Users] @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersPaginatedList(first: Int!, after: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  usersUsingusername(username: String!): Users
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE username = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdRange(lowerId: Int!, upperId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id BETWEEN ? AND ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdLessThan(maxId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id < ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'UserEducation'
+  userEducation(id: Int!): UserEducation @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationList: [UserEducation] @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationPaginatedList(first: Int!, after: Int!): [UserEducation]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT degree, id, institution, user_id FROM UserEducation ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+
+  # Queries for 'UserFollowers'
+  userFollowers(id: Int!): UserFollowers @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersList: [UserFollowers] @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersPaginatedList(first: Int!, after: Int!): [UserFollowers]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT follower_id, id, user_id FROM UserFollowers ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+}
+
+type Mutation {
+  # Mutations for 'Comments'
+  deleteComments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", dml: DELETE, configuration: ""mysql_config"")
+  insertComments(post_id: Int!, user_id: Int!, content: String!): Comments
+    @dbquery(type: ""mysql"", table: ""comments"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Posts'
+  deletePosts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", dml: DELETE, configuration: ""mysql_config"")
+  insertPosts(user_id: Int!, content: String!, title: String!): Posts
+    @dbquery(type: ""mysql"", table: ""posts"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Users'
+  deleteUsers(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", dml: DELETE, configuration: ""mysql_config"")
+  insertUsers(email: String!, username: String!): Users
+    @dbquery(type: ""mysql"", table: ""users"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'UserEducation'
+  deleteUserEducation(id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserEducation(degree: String!, institution: String!, user_id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+
+  # Mutations for 'UserFollowers'
+  deleteUserFollowers(id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserFollowers(follower_id: Int!, user_id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+}","query MyQuery{
+  comments(id: 15) {
+    id
+    content
+    posts {
+      id
+      title
+    }
+  }
+}","query MyQuery2 {
+  comments(id: 15) {
+    id
+    content
+    posts {
+      id
+      title
+      content
+    }
+  }
+}",
+"scalar DateTime
+
+directive @dbquery(type: String, table: String, configuration: String, query: String, dml: String) on FIELD_DEFINITION
+directive @materializer(query: String) on FIELD_DEFINITION
+
+type Comments {
+  content: String!
+  created_at: DateTime
+  id: Int!
+  post_id: Int!
+  posts: Posts
+  user_id: Int!
+  users: Users
+}
+
+type Posts {
+  comments: [Comments]
+  content: String!
+  created_at: DateTime
+  id: Int!
+  title: String
+  user_id: Int!
+  users: Users
+}
+
+type Users {
+  comments: [Comments]
+  created_at: DateTime
+  email: String!
+  id: Int!
+  posts: [Posts]
+  username: String!
+  userEducation: UserEducation
+  userFollowers: [UserFollowers]
+}
+
+type UserEducation {
+  degree: String!
+  id: Int!
+  institution: String!
+  user_id: Int!
+  users: Users 
+}
+
+type UserFollowers {
+  follower_id: Int!
+  id: Int!
+  user_id: Int!
+}
+
+type Query {
+  # Queries for 'Comments'
+  comments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsList: [Comments] @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsPaginatedList(first: Int!, after: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_1(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE post_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_2(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Posts'
+  posts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsList: [Posts] @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsPaginatedList(first: Int!, after: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  postsUsinguser_id(user_id: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Users'
+  usersById(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  users(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersList: [Users] @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersPaginatedList(first: Int!, after: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  usersUsingusername(username: String!): Users
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE username = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdRange(lowerId: Int!, upperId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id BETWEEN ? AND ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdLessThan(maxId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id < ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'UserEducation'
+  userEducation(id: Int!): UserEducation @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationList: [UserEducation] @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationPaginatedList(first: Int!, after: Int!): [UserEducation]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT degree, id, institution, user_id FROM UserEducation ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+
+  # Queries for 'UserFollowers'
+  userFollowers(id: Int!): UserFollowers @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersList: [UserFollowers] @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersPaginatedList(first: Int!, after: Int!): [UserFollowers]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT follower_id, id, user_id FROM UserFollowers ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+}
+
+type Mutation {
+  # Mutations for 'Comments'
+  deleteComments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", dml: DELETE, configuration: ""mysql_config"")
+  insertComments(post_id: Int!, user_id: Int!, content: String!): Comments
+    @dbquery(type: ""mysql"", table: ""comments"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Posts'
+  deletePosts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", dml: DELETE, configuration: ""mysql_config"")
+  insertPosts(user_id: Int!, content: String!, title: String!): Posts
+    @dbquery(type: ""mysql"", table: ""posts"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Users'
+  deleteUsers(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", dml: DELETE, configuration: ""mysql_config"")
+  insertUsers(email: String!, username: String!): Users
+    @dbquery(type: ""mysql"", table: ""users"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'UserEducation'
+  deleteUserEducation(id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserEducation(degree: String!, institution: String!, user_id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+
+  # Mutations for 'UserFollowers'
+  deleteUserFollowers(id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserFollowers(follower_id: Int!, user_id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+}","query MyQuery{
+  usersList {
+    id
+    username
+    email
+  }
+}","query MyQuery2{
+  filterUsersByIdLessThan(maxId: 999999) {
+    id
+    username
+    email
+  }
+}",
+"scalar DateTime
+
+directive @dbquery(type: String, table: String, configuration: String, query: String, dml: String) on FIELD_DEFINITION
+directive @materializer(query: String) on FIELD_DEFINITION
+
+type Comments {
+  content: String!
+  created_at: DateTime
+  id: Int!
+  post_id: Int!
+  posts: Posts
+  user_id: Int!
+  users: Users
+}
+
+type Posts {
+  comments: [Comments]
+  content: String!
+  created_at: DateTime
+  id: Int!
+  title: String
+  user_id: Int!
+  users: Users
+}
+
+type Users {
+  comments: [Comments]
+  created_at: DateTime
+  email: String!
+  id: Int!
+  posts: [Posts]
+  username: String!
+  userEducation: UserEducation
+  userFollowers: [UserFollowers]
+}
+
+type UserEducation {
+  degree: String!
+  id: Int!
+  institution: String!
+  user_id: Int!
+  users: Users 
+}
+
+type UserFollowers {
+  follower_id: Int!
+  id: Int!
+  user_id: Int!
+}
+
+type Query {
+  # Queries for 'Comments'
+  comments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsList: [Comments] @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsPaginatedList(first: Int!, after: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_1(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE post_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_2(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Posts'
+  posts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsList: [Posts] @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsPaginatedList(first: Int!, after: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  postsUsinguser_id(user_id: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Users'
+  usersById(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  users(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersList: [Users] @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersPaginatedList(first: Int!, after: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  usersUsingusername(username: String!): Users
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE username = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdRange(lowerId: Int!, upperId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id BETWEEN ? AND ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdLessThan(maxId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id < ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'UserEducation'
+  userEducation(id: Int!): UserEducation @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationList: [UserEducation] @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationPaginatedList(first: Int!, after: Int!): [UserEducation]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT degree, id, institution, user_id FROM UserEducation ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+
+  # Queries for 'UserFollowers'
+  userFollowers(id: Int!): UserFollowers @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersList: [UserFollowers] @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersPaginatedList(first: Int!, after: Int!): [UserFollowers]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT follower_id, id, user_id FROM UserFollowers ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+}
+
+type Mutation {
+  # Mutations for 'Comments'
+  deleteComments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", dml: DELETE, configuration: ""mysql_config"")
+  insertComments(post_id: Int!, user_id: Int!, content: String!): Comments
+    @dbquery(type: ""mysql"", table: ""comments"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Posts'
+  deletePosts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", dml: DELETE, configuration: ""mysql_config"")
+  insertPosts(user_id: Int!, content: String!, title: String!): Posts
+    @dbquery(type: ""mysql"", table: ""posts"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Users'
+  deleteUsers(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", dml: DELETE, configuration: ""mysql_config"")
+  insertUsers(email: String!, username: String!): Users
+    @dbquery(type: ""mysql"", table: ""users"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'UserEducation'
+  deleteUserEducation(id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserEducation(degree: String!, institution: String!, user_id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+
+  # Mutations for 'UserFollowers'
+  deleteUserFollowers(id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserFollowers(follower_id: Int!, user_id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+}","query MyQuery {
+  userFollowers(id: 5) {
+    user_id
+    follower_id
+  }
+}","query MyQuery2 {
+  userFollowersList {
+    user_id
+    follower_id
+  }
+}",
+"scalar DateTime
+
+directive @dbquery(type: String, table: String, configuration: String, query: String, dml: String) on FIELD_DEFINITION
+directive @materializer(query: String) on FIELD_DEFINITION
+
+type Comments {
+  content: String!
+  created_at: DateTime
+  id: Int!
+  post_id: Int!
+  posts: Posts
+  user_id: Int!
+  users: Users
+}
+
+type Posts {
+  comments: [Comments]
+  content: String!
+  created_at: DateTime
+  id: Int!
+  title: String
+  user_id: Int!
+  users: Users
+}
+
+type Users {
+  comments: [Comments]
+  created_at: DateTime
+  email: String!
+  id: Int!
+  posts: [Posts]
+  username: String!
+  userEducation: UserEducation
+  userFollowers: [UserFollowers]
+}
+
+type UserEducation {
+  degree: String!
+  id: Int!
+  institution: String!
+  user_id: Int!
+  users: Users 
+}
+
+type UserFollowers {
+  follower_id: Int!
+  id: Int!
+  user_id: Int!
+}
+
+type Query {
+  # Queries for 'Comments'
+  comments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsList: [Comments] @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsPaginatedList(first: Int!, after: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_1(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE post_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_2(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Posts'
+  posts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsList: [Posts] @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsPaginatedList(first: Int!, after: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  postsUsinguser_id(user_id: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Users'
+  usersById(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  users(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersList: [Users] @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersPaginatedList(first: Int!, after: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  usersUsingusername(username: String!): Users
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE username = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdRange(lowerId: Int!, upperId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id BETWEEN ? AND ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdLessThan(maxId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id < ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'UserEducation'
+  userEducation(id: Int!): UserEducation @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationList: [UserEducation] @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationPaginatedList(first: Int!, after: Int!): [UserEducation]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT degree, id, institution, user_id FROM UserEducation ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+
+  # Queries for 'UserFollowers'
+  userFollowers(id: Int!): UserFollowers @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersList: [UserFollowers] @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersPaginatedList(first: Int!, after: Int!): [UserFollowers]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT follower_id, id, user_id FROM UserFollowers ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+}
+
+type Mutation {
+  # Mutations for 'Comments'
+  deleteComments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", dml: DELETE, configuration: ""mysql_config"")
+  insertComments(post_id: Int!, user_id: Int!, content: String!): Comments
+    @dbquery(type: ""mysql"", table: ""comments"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Posts'
+  deletePosts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", dml: DELETE, configuration: ""mysql_config"")
+  insertPosts(user_id: Int!, content: String!, title: String!): Posts
+    @dbquery(type: ""mysql"", table: ""posts"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Users'
+  deleteUsers(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", dml: DELETE, configuration: ""mysql_config"")
+  insertUsers(email: String!, username: String!): Users
+    @dbquery(type: ""mysql"", table: ""users"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'UserEducation'
+  deleteUserEducation(id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserEducation(degree: String!, institution: String!, user_id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+
+  # Mutations for 'UserFollowers'
+  deleteUserFollowers(id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserFollowers(follower_id: Int!, user_id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+}","query MyQuery {
+  commentsUsingComments_ibfk_1(id: 22) {
+    id
+    content
+    post_id
+  }
+}","query MyQuery {
+  posts(id: 22) {
+    comments {
+      id
+      content
+      post_id
+    }
+  }
+}",
+"scalar DateTime
+
+directive @dbquery(type: String, table: String, configuration: String, query: String, dml: String) on FIELD_DEFINITION
+directive @materializer(query: String) on FIELD_DEFINITION
+
+type Comments {
+  content: String!
+  created_at: DateTime
+  id: Int!
+  post_id: Int!
+  posts: Posts
+  user_id: Int!
+  users: Users
+}
+
+type Posts {
+  comments: [Comments]
+  content: String!
+  created_at: DateTime
+  id: Int!
+  title: String
+  user_id: Int!
+  users: Users
+}
+
+type Users {
+  comments: [Comments]
+  created_at: DateTime
+  email: String!
+  id: Int!
+  posts: [Posts]
+  username: String!
+  userEducation: UserEducation
+  userFollowers: [UserFollowers]
+}
+
+type UserEducation {
+  degree: String!
+  id: Int!
+  institution: String!
+  user_id: Int!
+  users: Users 
+}
+
+type UserFollowers {
+  follower_id: Int!
+  id: Int!
+  user_id: Int!
+}
+
+type Query {
+  # Queries for 'Comments'
+  comments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsList: [Comments] @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsPaginatedList(first: Int!, after: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_1(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE post_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_2(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Posts'
+  posts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsList: [Posts] @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsPaginatedList(first: Int!, after: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  postsUsinguser_id(user_id: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Users'
+  usersById(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  users(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersList: [Users] @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersPaginatedList(first: Int!, after: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  usersUsingusername(username: String!): Users
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE username = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdRange(lowerId: Int!, upperId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id BETWEEN ? AND ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdLessThan(maxId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id < ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'UserEducation'
+  userEducation(id: Int!): UserEducation @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationList: [UserEducation] @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationPaginatedList(first: Int!, after: Int!): [UserEducation]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT degree, id, institution, user_id FROM UserEducation ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+
+  # Queries for 'UserFollowers'
+  userFollowers(id: Int!): UserFollowers @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersList: [UserFollowers] @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersPaginatedList(first: Int!, after: Int!): [UserFollowers]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT follower_id, id, user_id FROM UserFollowers ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+}
+
+type Mutation {
+  # Mutations for 'Comments'
+  deleteComments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", dml: DELETE, configuration: ""mysql_config"")
+  insertComments(post_id: Int!, user_id: Int!, content: String!): Comments
+    @dbquery(type: ""mysql"", table: ""comments"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Posts'
+  deletePosts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", dml: DELETE, configuration: ""mysql_config"")
+  insertPosts(user_id: Int!, content: String!, title: String!): Posts
+    @dbquery(type: ""mysql"", table: ""posts"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Users'
+  deleteUsers(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", dml: DELETE, configuration: ""mysql_config"")
+  insertUsers(email: String!, username: String!): Users
+    @dbquery(type: ""mysql"", table: ""users"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'UserEducation'
+  deleteUserEducation(id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserEducation(degree: String!, institution: String!, user_id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+
+  # Mutations for 'UserFollowers'
+  deleteUserFollowers(id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserFollowers(follower_id: Int!, user_id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+}",query MyQuery { users(id: 10) { email posts { content } } },query MyQuery { usersById(id: 10) { email postsUsinguser_id(user_id: 10) { content } } },E
+"scalar DateTime
+
+directive @dbquery(type: String, table: String, configuration: String, query: String, dml: String) on FIELD_DEFINITION
+directive @materializer(query: String) on FIELD_DEFINITION
+
+type Comments {
+  content: String!
+  created_at: DateTime
+  id: Int!
+  post_id: Int!
+  posts: Posts
+  user_id: Int!
+  users: Users
+}
+
+type Posts {
+  comments: [Comments]
+  content: String!
+  created_at: DateTime
+  id: Int!
+  title: String
+  user_id: Int!
+  users: Users
+}
+
+type Users {
+  comments: [Comments]
+  created_at: DateTime
+  email: String!
+  id: Int!
+  posts: [Posts]
+  username: String!
+  userEducation: UserEducation
+  userFollowers: [UserFollowers]
+}
+
+type UserEducation {
+  degree: String!
+  id: Int!
+  institution: String!
+  user_id: Int!
+  users: Users 
+}
+
+type UserFollowers {
+  follower_id: Int!
+  id: Int!
+  user_id: Int!
+}
+
+type Query {
+  # Queries for 'Comments'
+  comments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsList: [Comments] @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsPaginatedList(first: Int!, after: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_1(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE post_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_2(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Posts'
+  posts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsList: [Posts] @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsPaginatedList(first: Int!, after: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  postsUsinguser_id(user_id: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Users'
+  usersById(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  users(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersList: [Users] @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersPaginatedList(first: Int!, after: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  usersUsingusername(username: String!): Users
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE username = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdRange(lowerId: Int!, upperId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id BETWEEN ? AND ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdLessThan(maxId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id < ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'UserEducation'
+  userEducation(id: Int!): UserEducation @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationList: [UserEducation] @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationPaginatedList(first: Int!, after: Int!): [UserEducation]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT degree, id, institution, user_id FROM UserEducation ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+
+  # Queries for 'UserFollowers'
+  userFollowers(id: Int!): UserFollowers @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersList: [UserFollowers] @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersPaginatedList(first: Int!, after: Int!): [UserFollowers]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT follower_id, id, user_id FROM UserFollowers ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+}
+
+type Mutation {
+  # Mutations for 'Comments'
+  deleteComments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", dml: DELETE, configuration: ""mysql_config"")
+  insertComments(post_id: Int!, user_id: Int!, content: String!): Comments
+    @dbquery(type: ""mysql"", table: ""comments"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Posts'
+  deletePosts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", dml: DELETE, configuration: ""mysql_config"")
+  insertPosts(user_id: Int!, content: String!, title: String!): Posts
+    @dbquery(type: ""mysql"", table: ""posts"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Users'
+  deleteUsers(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", dml: DELETE, configuration: ""mysql_config"")
+  insertUsers(email: String!, username: String!): Users
+    @dbquery(type: ""mysql"", table: ""users"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'UserEducation'
+  deleteUserEducation(id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserEducation(degree: String!, institution: String!, user_id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+
+  # Mutations for 'UserFollowers'
+  deleteUserFollowers(id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserFollowers(follower_id: Int!, user_id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+}","query MyQuery {
+  users(id: 10) {
+    ...UserCore
+    posts { title }
+  }
+}
+fragment UserCore on Users { email username }","query MyQuery {
+  usersById(id: 10) {
+    email
+    username
+    postsList { title }
+  }
+}",
+"scalar DateTime
+
+directive @dbquery(type: String, table: String, configuration: String, query: String, dml: String) on FIELD_DEFINITION
+directive @materializer(query: String) on FIELD_DEFINITION
+
+type Comments {
+  content: String!
+  created_at: DateTime
+  id: Int!
+  post_id: Int!
+  posts: Posts
+  user_id: Int!
+  users: Users
+}
+
+type Posts {
+  comments: [Comments]
+  content: String!
+  created_at: DateTime
+  id: Int!
+  title: String
+  user_id: Int!
+  users: Users
+}
+
+type Users {
+  comments: [Comments]
+  created_at: DateTime
+  email: String!
+  id: Int!
+  posts: [Posts]
+  username: String!
+  userEducation: UserEducation
+  userFollowers: [UserFollowers]
+}
+
+type UserEducation {
+  degree: String!
+  id: Int!
+  institution: String!
+  user_id: Int!
+  users: Users 
+}
+
+type UserFollowers {
+  follower_id: Int!
+  id: Int!
+  user_id: Int!
+}
+
+type Query {
+  # Queries for 'Comments'
+  comments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsList: [Comments] @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsPaginatedList(first: Int!, after: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_1(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE post_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_2(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Posts'
+  posts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsList: [Posts] @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsPaginatedList(first: Int!, after: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  postsUsinguser_id(user_id: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Users'
+  usersById(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  users(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersList: [Users] @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersPaginatedList(first: Int!, after: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  usersUsingusername(username: String!): Users
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE username = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdRange(lowerId: Int!, upperId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id BETWEEN ? AND ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdLessThan(maxId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id < ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'UserEducation'
+  userEducation(id: Int!): UserEducation @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationList: [UserEducation] @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationPaginatedList(first: Int!, after: Int!): [UserEducation]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT degree, id, institution, user_id FROM UserEducation ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+
+  # Queries for 'UserFollowers'
+  userFollowers(id: Int!): UserFollowers @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersList: [UserFollowers] @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersPaginatedList(first: Int!, after: Int!): [UserFollowers]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT follower_id, id, user_id FROM UserFollowers ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+}
+
+type Mutation {
+  # Mutations for 'Comments'
+  deleteComments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", dml: DELETE, configuration: ""mysql_config"")
+  insertComments(post_id: Int!, user_id: Int!, content: String!): Comments
+    @dbquery(type: ""mysql"", table: ""comments"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Posts'
+  deletePosts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", dml: DELETE, configuration: ""mysql_config"")
+  insertPosts(user_id: Int!, content: String!, title: String!): Posts
+    @dbquery(type: ""mysql"", table: ""posts"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Users'
+  deleteUsers(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", dml: DELETE, configuration: ""mysql_config"")
+  insertUsers(email: String!, username: String!): Users
+    @dbquery(type: ""mysql"", table: ""users"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'UserEducation'
+  deleteUserEducation(id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserEducation(degree: String!, institution: String!, user_id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+
+  # Mutations for 'UserFollowers'
+  deleteUserFollowers(id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserFollowers(follower_id: Int!, user_id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+}",query { mainUser: users(id: 10) { contact: email } },query { usersById(id: 10) { email } },
+"scalar DateTime
+
+directive @dbquery(type: String, table: String, configuration: String, query: String, dml: String) on FIELD_DEFINITION
+directive @materializer(query: String) on FIELD_DEFINITION
+
+type Comments {
+  content: String!
+  created_at: DateTime
+  id: Int!
+  post_id: Int!
+  posts: Posts
+  user_id: Int!
+  users: Users
+}
+
+type Posts {
+  comments: [Comments]
+  content: String!
+  created_at: DateTime
+  id: Int!
+  title: String
+  user_id: Int!
+  users: Users
+}
+
+type Users {
+  comments: [Comments]
+  created_at: DateTime
+  email: String!
+  id: Int!
+  posts: [Posts]
+  username: String!
+  userEducation: UserEducation
+  userFollowers: [UserFollowers]
+}
+
+type UserEducation {
+  degree: String!
+  id: Int!
+  institution: String!
+  user_id: Int!
+  users: Users 
+}
+
+type UserFollowers {
+  follower_id: Int!
+  id: Int!
+  user_id: Int!
+}
+
+type Query {
+  # Queries for 'Comments'
+  comments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsList: [Comments] @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsPaginatedList(first: Int!, after: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_1(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE post_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_2(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Posts'
+  posts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsList: [Posts] @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsPaginatedList(first: Int!, after: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  postsUsinguser_id(user_id: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Users'
+  usersById(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  users(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersList: [Users] @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersPaginatedList(first: Int!, after: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  usersUsingusername(username: String!): Users
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE username = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdRange(lowerId: Int!, upperId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id BETWEEN ? AND ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdLessThan(maxId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id < ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'UserEducation'
+  userEducation(id: Int!): UserEducation @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationList: [UserEducation] @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationPaginatedList(first: Int!, after: Int!): [UserEducation]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT degree, id, institution, user_id FROM UserEducation ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+
+  # Queries for 'UserFollowers'
+  userFollowers(id: Int!): UserFollowers @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersList: [UserFollowers] @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersPaginatedList(first: Int!, after: Int!): [UserFollowers]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT follower_id, id, user_id FROM UserFollowers ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+}
+
+type Mutation {
+  # Mutations for 'Comments'
+  deleteComments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", dml: DELETE, configuration: ""mysql_config"")
+  insertComments(post_id: Int!, user_id: Int!, content: String!): Comments
+    @dbquery(type: ""mysql"", table: ""comments"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Posts'
+  deletePosts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", dml: DELETE, configuration: ""mysql_config"")
+  insertPosts(user_id: Int!, content: String!, title: String!): Posts
+    @dbquery(type: ""mysql"", table: ""posts"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Users'
+  deleteUsers(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", dml: DELETE, configuration: ""mysql_config"")
+  insertUsers(email: String!, username: String!): Users
+    @dbquery(type: ""mysql"", table: ""users"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'UserEducation'
+  deleteUserEducation(id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserEducation(degree: String!, institution: String!, user_id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+
+  # Mutations for 'UserFollowers'
+  deleteUserFollowers(id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserFollowers(follower_id: Int!, user_id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+}","query {
+  postsPaginatedList(first: 5, after: 10) {
+    content
+  }
+}","query {
+  postsList {
+    content
+    @skip(if: $paginated)
+  }
+}",
+"scalar DateTime
+
+directive @dbquery(type: String, table: String, configuration: String, query: String, dml: String) on FIELD_DEFINITION
+directive @materializer(query: String) on FIELD_DEFINITION
+
+type Comments {
+  content: String!
+  created_at: DateTime
+  id: Int!
+  post_id: Int!
+  posts: Posts
+  user_id: Int!
+  users: Users
+}
+
+type Posts {
+  comments: [Comments]
+  content: String!
+  created_at: DateTime
+  id: Int!
+  title: String
+  user_id: Int!
+  users: Users
+}
+
+type Users {
+  comments: [Comments]
+  created_at: DateTime
+  email: String!
+  id: Int!
+  posts: [Posts]
+  username: String!
+  userEducation: UserEducation
+  userFollowers: [UserFollowers]
+}
+
+type UserEducation {
+  degree: String!
+  id: Int!
+  institution: String!
+  user_id: Int!
+  users: Users 
+}
+
+type UserFollowers {
+  follower_id: Int!
+  id: Int!
+  user_id: Int!
+}
+
+type Query {
+  # Queries for 'Comments'
+  comments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsList: [Comments] @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsPaginatedList(first: Int!, after: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_1(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE post_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_2(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Posts'
+  posts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsList: [Posts] @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsPaginatedList(first: Int!, after: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  postsUsinguser_id(user_id: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Users'
+  usersById(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  users(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersList: [Users] @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersPaginatedList(first: Int!, after: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  usersUsingusername(username: String!): Users
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE username = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdRange(lowerId: Int!, upperId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id BETWEEN ? AND ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdLessThan(maxId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id < ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'UserEducation'
+  userEducation(id: Int!): UserEducation @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationList: [UserEducation] @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationPaginatedList(first: Int!, after: Int!): [UserEducation]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT degree, id, institution, user_id FROM UserEducation ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+
+  # Queries for 'UserFollowers'
+  userFollowers(id: Int!): UserFollowers @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersList: [UserFollowers] @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersPaginatedList(first: Int!, after: Int!): [UserFollowers]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT follower_id, id, user_id FROM UserFollowers ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+}
+
+type Mutation {
+  # Mutations for 'Comments'
+  deleteComments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", dml: DELETE, configuration: ""mysql_config"")
+  insertComments(post_id: Int!, user_id: Int!, content: String!): Comments
+    @dbquery(type: ""mysql"", table: ""comments"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Posts'
+  deletePosts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", dml: DELETE, configuration: ""mysql_config"")
+  insertPosts(user_id: Int!, content: String!, title: String!): Posts
+    @dbquery(type: ""mysql"", table: ""posts"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Users'
+  deleteUsers(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", dml: DELETE, configuration: ""mysql_config"")
+  insertUsers(email: String!, username: String!): Users
+    @dbquery(type: ""mysql"", table: ""users"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'UserEducation'
+  deleteUserEducation(id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserEducation(degree: String!, institution: String!, user_id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+
+  # Mutations for 'UserFollowers'
+  deleteUserFollowers(id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserFollowers(follower_id: Int!, user_id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+}",query { users(id: 10) { email } ,query { users(id: 20) { email } },
+"scalar DateTime
+
+directive @dbquery(type: String, table: String, configuration: String, query: String, dml: String) on FIELD_DEFINITION
+directive @materializer(query: String) on FIELD_DEFINITION
+
+type Comments {
+  content: String!
+  created_at: DateTime
+  id: Int!
+  post_id: Int!
+  posts: Posts
+  user_id: Int!
+  users: Users
+}
+
+type Posts {
+  comments: [Comments]
+  content: String!
+  created_at: DateTime
+  id: Int!
+  title: String
+  user_id: Int!
+  users: Users
+}
+
+type Users {
+  comments: [Comments]
+  created_at: DateTime
+  email: String!
+  id: Int!
+  posts: [Posts]
+  username: String!
+  userEducation: UserEducation
+  userFollowers: [UserFollowers]
+}
+
+type UserEducation {
+  degree: String!
+  id: Int!
+  institution: String!
+  user_id: Int!
+  users: Users 
+}
+
+type UserFollowers {
+  follower_id: Int!
+  id: Int!
+  user_id: Int!
+}
+
+type Query {
+  # Queries for 'Comments'
+  comments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsList: [Comments] @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsPaginatedList(first: Int!, after: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_1(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE post_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_2(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Posts'
+  posts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsList: [Posts] @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsPaginatedList(first: Int!, after: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  postsUsinguser_id(user_id: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Users'
+  usersById(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  users(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersList: [Users] @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersPaginatedList(first: Int!, after: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  usersUsingusername(username: String!): Users
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE username = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdRange(lowerId: Int!, upperId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id BETWEEN ? AND ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdLessThan(maxId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id < ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'UserEducation'
+  userEducation(id: Int!): UserEducation @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationList: [UserEducation] @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationPaginatedList(first: Int!, after: Int!): [UserEducation]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT degree, id, institution, user_id FROM UserEducation ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+
+  # Queries for 'UserFollowers'
+  userFollowers(id: Int!): UserFollowers @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersList: [UserFollowers] @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersPaginatedList(first: Int!, after: Int!): [UserFollowers]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT follower_id, id, user_id FROM UserFollowers ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+}
+
+type Mutation {
+  # Mutations for 'Comments'
+  deleteComments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", dml: DELETE, configuration: ""mysql_config"")
+  insertComments(post_id: Int!, user_id: Int!, content: String!): Comments
+    @dbquery(type: ""mysql"", table: ""comments"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Posts'
+  deletePosts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", dml: DELETE, configuration: ""mysql_config"")
+  insertPosts(user_id: Int!, content: String!, title: String!): Posts
+    @dbquery(type: ""mysql"", table: ""posts"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Users'
+  deleteUsers(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", dml: DELETE, configuration: ""mysql_config"")
+  insertUsers(email: String!, username: String!): Users
+    @dbquery(type: ""mysql"", table: ""users"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'UserEducation'
+  deleteUserEducation(id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserEducation(degree: String!, institution: String!, user_id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+
+  # Mutations for 'UserFollowers'
+  deleteUserFollowers(id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserFollowers(follower_id: Int!, user_id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+}",query { posts(id: 5) { title } },query { posts(id: 5) { title user_id } },
+"scalar DateTime
+
+directive @dbquery(type: String, table: String, configuration: String, query: String, dml: String) on FIELD_DEFINITION
+directive @materializer(query: String) on FIELD_DEFINITION
+
+type Comments {
+  content: String!
+  created_at: DateTime
+  id: Int!
+  post_id: Int!
+  posts: Posts
+  user_id: Int!
+  users: Users
+}
+
+type Posts {
+  comments: [Comments]
+  content: String!
+  created_at: DateTime
+  id: Int!
+  title: String
+  user_id: Int!
+  users: Users
+}
+
+type Users {
+  comments: [Comments]
+  created_at: DateTime
+  email: String!
+  id: Int!
+  posts: [Posts]
+  username: String!
+  userEducation: UserEducation
+  userFollowers: [UserFollowers]
+}
+
+type UserEducation {
+  degree: String!
+  id: Int!
+  institution: String!
+  user_id: Int!
+  users: Users 
+}
+
+type UserFollowers {
+  follower_id: Int!
+  id: Int!
+  user_id: Int!
+}
+
+type Query {
+  # Queries for 'Comments'
+  comments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsList: [Comments] @dbquery(type: ""mysql"", table: ""comments"", configuration: ""mysql_config"")
+  commentsPaginatedList(first: Int!, after: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_1(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE post_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  commentsUsingComments_ibfk_2(id: Int!): [Comments]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, post_id, user_id FROM comments WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Posts'
+  posts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsList: [Posts] @dbquery(type: ""mysql"", table: ""posts"", configuration: ""mysql_config"")
+  postsPaginatedList(first: Int!, after: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  postsUsinguser_id(user_id: Int!): [Posts]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT content, created_at, id, title, user_id FROM posts WHERE user_id = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'Users'
+  usersById(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  users(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersList: [Users] @dbquery(type: ""mysql"", table: ""users"", configuration: ""mysql_config"")
+  usersPaginatedList(first: Int!, after: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  usersUsingusername(username: String!): Users
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE username = ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdRange(lowerId: Int!, upperId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id BETWEEN ? AND ?
+      """"""
+      configuration: ""mysql_config""
+    )
+  filterUsersByIdLessThan(maxId: Int!): [Users]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT created_at, email, id, username FROM users WHERE id < ?
+      """"""
+      configuration: ""mysql_config""
+    )
+
+  # Queries for 'UserEducation'
+  userEducation(id: Int!): UserEducation @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationList: [UserEducation] @dbquery(type: ""mysql"", table: ""UserEducation"", configuration: ""userInfo_mysql_config"")
+  userEducationPaginatedList(first: Int!, after: Int!): [UserEducation]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT degree, id, institution, user_id FROM UserEducation ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+
+  # Queries for 'UserFollowers'
+  userFollowers(id: Int!): UserFollowers @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersList: [UserFollowers] @dbquery(type: ""mysql"", table: ""UserFollowers"", configuration: ""userInfo_mysql_config"")
+  userFollowersPaginatedList(first: Int!, after: Int!): [UserFollowers]
+    @dbquery(
+      type: ""mysql""
+      query: """"""
+      SELECT follower_id, id, user_id FROM UserFollowers ORDER BY id LIMIT ? OFFSET ?
+      """"""
+      configuration: ""userInfo_mysql_config""
+    )
+}
+
+type Mutation {
+  # Mutations for 'Comments'
+  deleteComments(id: Int!): Comments @dbquery(type: ""mysql"", table: ""comments"", dml: DELETE, configuration: ""mysql_config"")
+  insertComments(post_id: Int!, user_id: Int!, content: String!): Comments
+    @dbquery(type: ""mysql"", table: ""comments"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Posts'
+  deletePosts(id: Int!): Posts @dbquery(type: ""mysql"", table: ""posts"", dml: DELETE, configuration: ""mysql_config"")
+  insertPosts(user_id: Int!, content: String!, title: String!): Posts
+    @dbquery(type: ""mysql"", table: ""posts"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'Users'
+  deleteUsers(id: Int!): Users @dbquery(type: ""mysql"", table: ""users"", dml: DELETE, configuration: ""mysql_config"")
+  insertUsers(email: String!, username: String!): Users
+    @dbquery(type: ""mysql"", table: ""users"", dml: INSERT, configuration: ""mysql_config"")
+
+  # Mutations for 'UserEducation'
+  deleteUserEducation(id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserEducation(degree: String!, institution: String!, user_id: Int!): UserEducation
+    @dbquery(type: ""mysql"", table: ""UserEducation"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+
+  # Mutations for 'UserFollowers'
+  deleteUserFollowers(id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: DELETE, configuration: ""userInfo_mysql_config"")
+  insertUserFollowers(follower_id: Int!, user_id: Int!): UserFollowers
+    @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: INSERT, configuration: ""userInfo_mysql_config"")
+}",query { users(id: 10) { posts { id } } },query { postsUsinguser_id(user_id: 10) { id } },
