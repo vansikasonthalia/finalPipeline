@@ -4,6 +4,8 @@ import os
 from datetime import datetime
 import logging
 from utils import setup_logger
+import csv
+
 
 # Set up the logger
 logger = setup_logger("readcsv_processing.log")
@@ -45,6 +47,20 @@ if not os.path.exists(output_dir):
     logger.info(f"Output directory {output_dir} created.")
 
 # The rest of the code follows this pattern
+# In readcsv.py - Add threshold column
+def process_csv(input_csv):
+    processed = []
+    with open(input_csv, newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        next(reader)  # Skip header
+        for idx, row in enumerate(reader):
+            if len(row) != 4:
+                raise ValueError(f"Invalid row {idx+1}: Expected 4 columns (schema, query1, query2, threshold), got {len(row)}")
+            
+            schema_file, query1_file, query2_file, threshold = row
+            row_dir = os.path.join("results", f"row_{idx+1}_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
+            processed.append((row_dir, schema_file, query1_file, query2_file, int(threshold)))
+    return processed
 
 def clean_string(value):
     """Remove leading and trailing quotes from strings."""
