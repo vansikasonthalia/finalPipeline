@@ -187,32 +187,34 @@ type Mutation {
     @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: DELETE, configuration: ""userInfo_mysql_config"")
   insertUserFollowers(follower_id: Int!, user_id: Int!): UserFollowers
     @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: INSERT, configuration: ""userInfo_mysql_config"")
-}","query {
+}","query  {
   users(id: 1) {
     id
     username
     email
     posts {
       title
-      id
-      user_id
+      content
     }
-  }
-  comments(id: 10) {
-    content
   }
 }
 
-","query {
+","fragment PostData on Posts {
+  title
+  content
+}
+
+fragment UserData on Users {
+  id
+  username
+  email
+  posts {
+    ...PostData
+  }
+}
+
+query  {
   users(id: 1) {
-    id
-    username
-    email
+    ...UserData
   }
-  comments(id: 10) {
-    content
-  }
- posts(id: 1){
-      id
-    }
 }"
