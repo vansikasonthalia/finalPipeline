@@ -14,7 +14,7 @@ def load_ast_from_file(input_file):
         raise ValueError(f"Error loading AST from {input_file}: {e}")
 
 def inline_fragments(ast: Dict, max_depth: int = 20) -> Dict:
-    """Simplify fragments in queries by recursively inlining fragment spreads."""
+    """Simplify fragments in queries by recursively inlining fragment spreads and flattening inline fragments."""
     definitions = ast["definitions"]
 
     # Collect fragment definitions into a map
@@ -24,42 +24,35 @@ def inline_fragments(ast: Dict, max_depth: int = 20) -> Dict:
         if definition["kind"] == "fragment_definition"
     }
 
-    def process_selections(
-        selections: List[Dict],
-        current_fragments: Set[str] = None,
-        depth: int = 0
-    ) -> List[Dict]:
-        """Recursively process selections and inline fragments."""
+    def process_selections(selections: List[Dict], current_fragments: Set[str] = None, depth: int = 0) -> List[Dict]:
+        """Recursively process selections, inline fragment spreads, and flatten inline fragments."""
         current_fragments = current_fragments or set()
         processed = []
-
         if depth > max_depth:
             raise CircularFragmentError(f"Maximum expansion depth {max_depth} exceeded")
-
         for selection in selections:
             if selection["kind"] == "fragment_spread":
                 fragment_name = selection["name"]["value"]
-
                 if fragment_name in current_fragments:
-                    raise CircularFragmentError(
-                        f"Circular fragment reference detected: {fragment_name}"
-                    )
-
+                    raise CircularFragmentError(f"Circular fragment reference detected: {fragment_name}")
                 if fragment_name in fragment_map:
                     new_fragments = current_fragments | {fragment_name}
-                    processed.extend(
-                        process_selections(fragment_map[fragment_name], new_fragments, depth + 1)
-                    )
+                    processed.extend(process_selections(fragment_map[fragment_name], new_fragments, depth + 1))
                 else:
                     print(f"Warning: Fragment definition for '{fragment_name}' not found!")
+            elif selection["kind"] == "inline_fragment":
+                # If an inline fragment has a selection set, inline (flatten) its selections into the parent.
+                if "selection_set" in selection and selection["selection_set"]:
+                    inline_selections = process_selections(selection["selection_set"]["selections"], current_fragments, depth)
+                    processed.extend(inline_selections)
             elif "selection_set" in selection and selection["selection_set"]:
+                # Process nested fields recursively.
                 selection["selection_set"]["selections"] = process_selections(
                     selection["selection_set"]["selections"], current_fragments, depth
                 )
                 processed.append(selection)
             else:
                 processed.append(selection)
-
         return processed
 
     # Process all definitions and inline fragments
@@ -68,13 +61,10 @@ def inline_fragments(ast: Dict, max_depth: int = 20) -> Dict:
         if definition["kind"] != "fragment_definition":
             if "selection_set" in definition and definition["selection_set"]:
                 try:
-                    definition["selection_set"]["selections"] = process_selections(
-                        definition["selection_set"]["selections"]
-                    )
+                    definition["selection_set"]["selections"] = process_selections(definition["selection_set"]["selections"])
                 except CircularFragmentError as e:
-                    raise ValueError(f"Error in operation {definition['name']['value']}: {str(e)}") from e
+                    raise ValueError(f"Error in operation {definition.get('name', {}).get('value', 'unknown')}: {str(e)}") from e
             new_definitions.append(definition)
-
     ast["definitions"] = new_definitions
     return ast
 
@@ -89,13 +79,11 @@ def further_normalize_ast(node):
         },
         "fields": []
     }
-
     if "selection_set" in node and node["selection_set"]:
         normalized["fields"] = [
             further_normalize_ast(sel)
             for sel in node["selection_set"].get("selections", [])
         ]
-
     return normalized
 
 def save_normalized_ast_to_file(ast, output_file):
@@ -105,31 +93,25 @@ def save_normalized_ast_to_file(ast, output_file):
     print(f"Normalized AST saved to {output_file}")
 
 def process_asts(query1_ast_file, query2_ast_file, output_dir):
-    """Process ASTs, inline fragments, and normalize them."""
+    """Process ASTs, inline fragments (including flattening inline fragments), and normalize them."""
     try:
         # Load the provided AST files
         query1_ast = load_ast_from_file(query1_ast_file)
         query2_ast = load_ast_from_file(query2_ast_file)
-
-        # Inline fragments in both query ASTs
+        # Inline fragments (both fragment spreads and inline fragments) in both query ASTs
         query1_ast = inline_fragments(query1_ast)
         query2_ast = inline_fragments(query2_ast)
-
-        # Further normalize the ASTs (you can modify this normalization logic as per your need)
+        # Further normalize the ASTs
         normalized_query1_ast = further_normalize_ast(query1_ast["definitions"][0])
         normalized_query2_ast = further_normalize_ast(query2_ast["definitions"][0])
-
         # Define output paths for the normalized ASTs
         n1_ast_path = os.path.join(output_dir, "n1_ast.json")
         n2_ast_path = os.path.join(output_dir, "n2_ast.json")
-
         # Save the normalized ASTs to the output directory
         save_normalized_ast_to_file(normalized_query1_ast, n1_ast_path)
         save_normalized_ast_to_file(normalized_query2_ast, n2_ast_path)
-
         # Return the paths to the normalized AST files
         return n1_ast_path, n2_ast_path
-
     except ValueError as e:
         print(f"Error: {e}")
 
@@ -138,7 +120,6 @@ if __name__ == "__main__":
     sample_query_file_1 = "query1.json"
     sample_query_file_2 = "query2.json"
     output_directory = "./output"
-
     try:
         process_asts(sample_query_file_1, sample_query_file_2, output_directory)
     except Exception as e:
