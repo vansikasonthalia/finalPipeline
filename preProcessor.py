@@ -4,7 +4,7 @@ import re
 # Define a function to extract GraphQL queries
 def extract_graphql_query(text):
     # Look for a query or mutation in the format 'query { ... }' or 'mutation { ... }'
-    query_pattern = r'(query|mutation)\s+(\w+)?\s*{.*?}'
+    query_pattern = r'(query)\s+(\w+)?\s*{.*?}'
     match = re.search(query_pattern, text, re.DOTALL)
     if match:
         return match.group(0)  # Return the whole GraphQL query

@@ -8,7 +8,7 @@ from Graph import process_normalized_asts
 from graphNet import process_and_visualize_ast
 from cycles import process_graphs
 import newRed  # Import newRed module
-from compare_jsons import are_adjacent_matrices_equivalent
+from compare_jsons import compare_transitive_closures
 import json
 
 # Setup logging configuration
@@ -72,7 +72,7 @@ def main():
                 process_and_visualize_ast(n2_ast_path, os.path.join(row_dir, "graph-2.json"), os.path.join(row_dir, "graph2_visualization.png"))
 
                 # Step 5: Detect and Remove Cycles in Graphs
-                process_graphs(os.path.join(row_dir, "graph-1.json"), os.path.join(row_dir, "graph-1.json"), row_dir)
+                process_graphs(os.path.join(row_dir, "graph-1.json"), os.path.join(row_dir, "graph-2.json"), row_dir)
 
                 
 
@@ -84,15 +84,15 @@ def main():
                 
 
                 # Step 7: Compare Query 1 and Optimized Query 2
-                query1_data = os.path.join(row_dir, "graph-1-cleaned-structured.json")
-                query2_data = os.path.join(row_dir, "optimized_query2.json")
+                query1_data = os.path.join(row_dir, "graph-1-cleaned.json")
+                query2_data = os.path.join(row_dir, "optimized_links2.json")
 
                 
                 
                 graph1 = load_json(query1_data)
                 graph2 = load_json(query2_data)
                 
-                is_equal = are_adjacent_matrices_equivalent(graph1, graph2, overfetching_threshold=2)
+                is_equal = compare_transitive_closures(graph1, graph2, start_node="query")
 
                 # Write content to CSV
                 writer.writerow([

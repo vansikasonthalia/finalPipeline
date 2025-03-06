@@ -35,11 +35,10 @@ def validate_and_parse_query(schema_content, query_content):
     # Validate the query
     validation_errors = validate(schema, query_ast)
     if validation_errors:
-        logging.error(" Validation errors detected:")
+        logging.error("Validation errors detected:")
         for error in validation_errors:
             logging.error(f"   - {error.message}")
             logging.error("Continuing to next set of queries despite validation errors.")
-
         return None  # Exit the script with an error status
 
     logging.info("Query successfully validated and parsed.")
@@ -56,10 +55,16 @@ def normalize_aliases(node):
 def resolve_fragments(node, fragments):
     """Resolve fragments in the query AST."""
     if node["kind"] == "fragment_spread":
+        # Check if the 'value' exists in the fragment spread
+        if "value" not in node["name"]:
+            logging.error(f"Missing 'value' key in fragment spread: {node}")
+            raise ValueError(f"Fragment spread missing 'value' in {node}")
+        
         fragment_name = node["name"]["value"]
         if fragment_name in fragments:
             return fragments[fragment_name]["selection_set"]
         else:
+            logging.error(f"Fragment '{fragment_name}' not found in fragments.")
             raise ValueError(f"Fragment {fragment_name} not found.")
     elif "selection_set" in node and node["selection_set"]:
         resolved_selections = []
@@ -72,18 +77,6 @@ def resolve_fragments(node, fragments):
         node["selection_set"]["selections"] = resolved_selections
     return node
 
-def normalize_query_ast(query_ast):
-    """Normalize the query AST by handling aliases and fragments."""
-    fragments = {
-        definition["name"]["value"]: definition
-        for definition in query_ast["definitions"]
-        if definition["kind"] == "fragment_definition"
-    }
-
-    for definition in query_ast["definitions"]:
-        if definition["kind"] == "operation_definition":
-            normalize_aliases(definition)
-            resolve_fragments(definition, fragments)
 
 def save_ast_to_file(ast, output_file):
     """Save the AST to a file."""
@@ -108,8 +101,8 @@ def process_queries(schema_file, query1_file, query2_file, output_dir):
         query1_ast = validate_and_parse_query(schema_content, query1_content)
         if query1_ast is None:
             logging.error(f"Skipping Query 1 due to validation errors.")
-            return None, None  # Return None to indicate failur
-        normalize_query_ast(query1_ast)
+            return None, None  # Return None to indicate failure
+        
 
         logging.info("Validating and parsing Query 2...")
         query2_ast = validate_and_parse_query(schema_content, query2_content)
@@ -117,7 +110,6 @@ def process_queries(schema_file, query1_file, query2_file, output_dir):
             logging.error(f"Skipping Query 2 due to validation errors.")
             return None, None  # Return None to indicate failure
         
-        normalize_query_ast(query2_ast)
 
         query1_ast_path = os.path.join(output_dir, "query1_ast.json")
         query2_ast_path = os.path.join(output_dir, "query2_ast.json")
