@@ -115,6 +115,7 @@ def save_json(data, file_path):
         logging.info(f" Optimized query saved as {file_path}")
     except Exception as e:
         logging.error(f" Error saving file {file_path}: {e}")
+    
 
 def optimize_queries(schema_path, row_dir):
     """ Optimize Query 2 using schema validation and save the result in the respective row directory. """
@@ -150,3 +151,41 @@ def optimize_queries(schema_path, row_dir):
     optimized_query2 = replace_redundant_endpoints(query2_graph, replacements) if replacements else query2_graph
 
     save_json(optimized_query2, optimized_query_path)
+    # Convert and save graph structure
+    optimized_graph = convert_to_graph_structure(optimized_query2)
+    graph_output_path = os.path.join(row_dir, "optimized_links2.json")
+    save_json(optimized_graph, graph_output_path)
+
+def convert_to_graph_structure(optimized_query):
+    nodes = []
+    links = []
+    node_ids = set()
+
+    def add_node(node_id):
+        if node_id not in node_ids:
+            nodes.append({"id": node_id})
+            node_ids.add(node_id)
+
+    def traverse_fields(parent, fields):
+        for field in fields:
+            # Preserve full argument syntax with parentheses
+            if field["name"].startswith("argument:"):
+                clean_name = field["name"].replace("argument:", "argument_")  # Convert colon to underscore
+                clean_name = re.sub(r'_([a-zA-Z]+)\(', r':\1(', clean_name)  # Restore colon after argument prefix
+            else:
+                # Clean non-argument fields normally
+                clean_name = re.sub(r'\(.*?\)', '', field["name"])
+            
+            add_node(clean_name)
+            links.append({"source": parent, "target": clean_name})
+            
+            if field.get("fields"):
+                traverse_fields(clean_name, field["fields"])
+
+    add_node("query")
+    if "fields" in optimized_query:
+        for top_field in optimized_query["fields"]:
+            if top_field["name"] == "query":
+                traverse_fields("query", top_field.get("fields", []))
+    
+    return {"nodes": nodes, "links": links}

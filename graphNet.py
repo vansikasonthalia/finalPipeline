@@ -12,14 +12,12 @@ def load_normalized_ast(input_file):
     try:
         logger.debug(f"Loading AST from file: {input_file}")
         with open(input_file, "r") as file:
-            return json.load(file)
+            ast = json.load(file)
+        logger.info(f"Successfully loaded AST from {input_file}")
+        return ast
     except Exception as e:
         logger.error(f"Error loading normalized AST from {input_file}: {e}")
         raise ValueError(f"Error loading normalized AST from {input_file}: {e}")
-
-# The rest of the functions follow this pattern
-
-
 
 def build_graph_from_ast(ast):
     """ Build a graph from a given AST where fields and arguments are separate nodes. """
@@ -44,12 +42,12 @@ def build_graph_from_ast(ast):
                 add_node_and_edges(node['name'], field)
 
     # Start building from the root (the 'fields' of the query)
-    for field in ast.get('fields', []):
-        add_node_and_edges(None, field)
+    if 'operation' in ast:  # Add the root node first
+        G.add_node(ast['name'])
+        add_node_and_edges(None, ast)  # Now recursively add its fields and arguments
 
     logger.debug("Graph construction completed.")
     return G
-
 
 def save_graph_to_json(G, output_file):
     """ Save the graph to a JSON file. """
@@ -60,7 +58,6 @@ def save_graph_to_json(G, output_file):
         logger.info(f"Graph saved to {output_file}")
     except Exception as e:
         logger.error(f"Error saving graph to {output_file}: {e}")
-
 
 def visualize_graph(G, output_image):
     """ Visualize the graph and save it to an image. """
@@ -75,7 +72,6 @@ def visualize_graph(G, output_image):
         logger.info(f"Graph saved to {output_image}")
     except Exception as e:
         logger.error(f"Error visualizing graph and saving to {output_image}: {e}")
-
 
 def process_and_visualize_ast(input_file, output_graph_file, output_image_file):
     """ Process AST from JSON, build graph, save the result, and visualize it. """
@@ -95,7 +91,6 @@ def process_and_visualize_ast(input_file, output_graph_file, output_image_file):
 
     except Exception as e:
         logger.error(f"Error processing AST: {e}")
-
 
 if __name__ == "__main__":
     # Input files for ASTs

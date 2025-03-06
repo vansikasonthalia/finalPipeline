@@ -74,14 +74,20 @@ def main():
                 # Step 5: Detect and Remove Cycles in Graphs
                 process_graphs(os.path.join(row_dir, "graph-1.json"), os.path.join(row_dir, "graph-1.json"), row_dir)
 
+                
+
                 # Step 6: Optimizing Query 2 Based on Schema Validation
                 schema_path = os.path.join(row_dir, "schema.graphql")
                 if os.path.exists(schema_path):
                     newRed.optimize_queries(schema_path, row_dir)
+                
+                
 
                 # Step 7: Compare Query 1 and Optimized Query 2
                 query1_data = os.path.join(row_dir, "graph-1-cleaned-structured.json")
                 query2_data = os.path.join(row_dir, "optimized_query2.json")
+
+                
                 
                 graph1 = load_json(query1_data)
                 graph2 = load_json(query2_data)

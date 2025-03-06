@@ -1,7 +1,8 @@
 import json
 import os
 import logging
-
+import networkx as nx
+import matplotlib.pyplot as plt
 # Set up logging configuration
 logging.basicConfig(
     level=logging.INFO,
@@ -22,6 +23,20 @@ def load_json(file_path):
     except Exception as e:
         logging.error(f" Error reading file {file_path}: {e}")
         return None
+    
+def visualize_graph(G, output_image):
+    """ Visualize the graph and save it to an image. """
+    try:
+        logging.debug(f"Visualizing graph and saving to {output_image}")
+        plt.figure(figsize=(10, 8))
+        pos = nx.spring_layout(G, seed=42)  # Layout for node positioning
+        nx.draw(G, pos, with_labels=True, node_size=3000, node_color="skyblue", font_size=12, font_weight="bold", width=2, edge_color="gray")
+        plt.title("Graph Visualization of AST")
+        plt.savefig(output_image, format="PNG", bbox_inches="tight")
+        plt.close()
+        logging.info(f"Graph saved to {output_image}")
+    except Exception as e:
+        logging.error(f"Error visualizing graph and saving to {output_image}: {e}")
 
 def detect_cycles(graph):
     """Detect cycles in the directed graph using DFS."""

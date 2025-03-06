@@ -188,21 +188,31 @@ type Mutation {
   insertUserFollowers(follower_id: Int!, user_id: Int!): UserFollowers
     @dbquery(type: ""mysql"", table: ""UserFollowers"", dml: INSERT, configuration: ""userInfo_mysql_config"")
 }","query {
-  users(id: 10) {
-    details: posts {
-      content
-      id
-    }
+  users(id: 1) {
+    id
     username
+    email
+    posts {
+      title
+      id
+      user_id
+    }
   }
-}","query {
-  users(id: 10) {
+  comments(id: 10) {
+    content
+  }
+}
+
+","query {
+  users(id: 1) {
+    id
     username
     email
   }
-  posts(id: 10) {
+  comments(id: 10) {
     content
-    id
-    title
   }
+ posts(id: 1){
+      id
+    }
 }"
