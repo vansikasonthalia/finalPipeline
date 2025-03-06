@@ -25,24 +25,50 @@ def replace_fragment_spreads(ast):
         else:
             new_definitions.append(definition)
 
+    # def replace_spreads(selections):
+    #     """Recursively replace fragment spreads in the selection set."""
+    #     new_selections = []
+    #     for selection in selections:
+    #         if selection["kind"] == "fragment_spread":
+    #             fragment_name = selection["name"]["value"]
+    #             if fragment_name in fragment_map:
+    #                 new_selections.extend(fragment_map[fragment_name])
+    #         else:
+    #             if "selection_set" in selection and selection["selection_set"]:
+    #                 selection["selection_set"]["selections"] = replace_spreads(selection["selection_set"]["selections"])
+    #             new_selections.append(selection)
+    #     return new_selections
+
+    # # Process the definitions and replace fragment spreads
+    # for definition in new_definitions:
+    #     if "selection_set" in definition and definition["selection_set"]:
+    #         definition["selection_set"]["selections"] = replace_spreads(definition["selection_set"]["selections"])
+
     def replace_spreads(selections):
         """Recursively replace fragment spreads in the selection set."""
+        has_fragment_spread = False
         new_selections = []
         for selection in selections:
             if selection["kind"] == "fragment_spread":
                 fragment_name = selection["name"]["value"]
                 if fragment_name in fragment_map:
                     new_selections.extend(fragment_map[fragment_name])
+                has_fragment_spread = True
             else:
                 if "selection_set" in selection and selection["selection_set"]:
                     selection["selection_set"]["selections"] = replace_spreads(selection["selection_set"]["selections"])
                 new_selections.append(selection)
-        return new_selections
+        return new_selections, has_fragment_spread
 
     # Process the definitions and replace fragment spreads
     for definition in new_definitions:
         if "selection_set" in definition and definition["selection_set"]:
-            definition["selection_set"]["selections"] = replace_spreads(definition["selection_set"]["selections"])
+            curent_selection_set = definition["selection_set"]["selections"]
+            updated_selection_set, has_fragment_spread = replace_spreads(curent_selection_set)
+            while (has_fragment_spread):
+                updated_selection_set, has_fragment_spread = replace_spreads(updated_selection_set)
+            definition["selection_set"]["selections"] = replace_spreads(updated_selection_set)
+            # definition["selection_set"]["selections"] = replace_spreads(definition["selection_set"]["selections"])
 
     # Remove type_condition from fragments
     for definition in new_definitions:
