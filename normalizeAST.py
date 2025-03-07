@@ -68,15 +68,42 @@ def inline_fragments(ast: Dict, max_depth: int = 20) -> Dict:
     ast["definitions"] = new_definitions
     return ast
 
+def get_argument_value(value_node):
+    """
+    Recursively convert a GraphQL value node into its corresponding Python value.
+    Handles scalar, object, list, and name types.
+    """
+    kind = value_node.get("kind")
+    if kind == "object_value":
+        # Process object fields into a dictionary.
+        result = {}
+        for field in value_node.get("fields", []):
+            field_name = field.get("name", {}).get("value")
+            if field_name is not None:
+                result[field_name] = get_argument_value(field.get("value"))
+        return result
+    elif kind in ["int_value", "float_value", "string_value", "boolean_value", "enum_value"]:
+        return value_node.get("value")
+    elif kind == "list_value":
+        # Process lists by recursively processing each item.
+        return [get_argument_value(item) for item in value_node.get("values", [])]
+    elif kind == "name":
+        return value_node.get("value")
+    else:
+        # Fallback if the expected keys are not found.
+        return value_node.get("value")
+
 def further_normalize_ast(node):
     """Normalize AST structure with safe access patterns."""
     normalized = {
         "operation": node.get("operation", "query"),
         "name": (node.get("name") or {}).get("value", "query"),
         "arguments": {
-            arg["name"]["value"]: arg["value"]["value"]
+            # Use get_argument_value to safely extract argument values.
+            arg.get("name", {}).get("value"): get_argument_value(arg.get("value"))
             for arg in node.get("arguments", [])
         },
+
         "fields": []
     }
     if "selection_set" in node and node["selection_set"]:
