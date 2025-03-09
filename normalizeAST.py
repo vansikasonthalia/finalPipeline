@@ -1,6 +1,80 @@
 import json
 import os
 from typing import List, Dict, Set
+import graphql 
+from graphql import (
+    ArgumentNode,
+    SelectionSetNode,
+    FieldNode,
+    NameNode,
+    ObjectValueNode,
+    IntValueNode,
+    StringValueNode,
+    parse,
+    
+)
+
+def simplify_filter(ast):
+    """Simplify GraphQL filter arguments by extracting direct equality conditions (eq) where possible."""
+
+    def simplify_field(field):
+        """Modify field arguments to extract direct equality conditions (eq)."""
+        if "arguments" not in field:
+            return field  # Skip fields without arguments
+
+        new_args = []
+        for arg in field["arguments"]:
+            if arg["name"]["value"] == "filter":  # Detect 'filter' argument
+                filter_value = arg["value"]
+                if filter_value["kind"] == "object_value":  # Ensure it's an object
+                    new_object_fields = []
+                    for field_item in filter_value["fields"]:
+                        field_name = field_item["name"]["value"]
+                        field_value = field_item["value"]
+
+                        if field_value["kind"] == "object_value":  # Check nested object
+                            eq_field = next((f for f in field_value["fields"] if f["name"]["value"] == "eq"), None)
+                            if eq_field:
+                                # Replace filter with direct equality condition
+                                new_args.append({
+                                    "kind": "argument",
+                                    "name": {"kind": "name", "value": field_name},
+                                    "value": eq_field["value"]
+                                })
+                            else:
+                                new_object_fields.append(field_item)
+                        else:
+                            new_object_fields.append(field_item)
+
+                    # If no transformation occurred, keep the original argument
+                    if new_object_fields:
+                        new_args.append({
+                            "kind": "argument",
+                            "name": arg["name"],
+                            "value": {"kind": "object_value", "fields": new_object_fields}
+                        })
+                else:
+                    new_args.append(arg)  # Keep argument unchanged if it's not an ObjectValueNode
+            else:
+                new_args.append(arg)  # Preserve other arguments
+
+        # Return updated field with new arguments
+        field["arguments"] = new_args
+        return field
+
+    # Traverse the AST and apply filter simplification
+    for definition in ast["definitions"]:
+        if "selection_set" in definition:
+            new_selections = []
+            for selection in definition["selection_set"]["selections"]:
+                if selection["kind"] == "field":
+                    new_selections.append(simplify_field(selection))
+                else:
+                    new_selections.append(selection)
+            definition["selection_set"]["selections"] = new_selections
+
+    return ast
+
 
 class CircularFragmentError(ValueError):
     pass
@@ -125,11 +199,14 @@ def process_asts(query1_ast_file, query2_ast_file, output_dir):
         # Load the provided AST files
         query1_ast = load_ast_from_file(query1_ast_file)
         query2_ast = load_ast_from_file(query2_ast_file)
+
+        query1_ast_data = simplify_filter(query1_ast)
+        query2_ast_data = simplify_filter(query2_ast)
         # Inline fragments (both fragment spreads and inline fragments) in both query ASTs
-        query1_ast = inline_fragments(query1_ast)
-        query2_ast = inline_fragments(query2_ast)
+        query1_ast = inline_fragments(query1_ast_data)
+        query2_ast = inline_fragments(query2_ast_data)
         # Further normalize the ASTs
-        normalized_query1_ast = further_normalize_ast(query1_ast["definitions"][0])
+        normalized_query1_ast = further_normalize_ast(query1_ast_data["definitions"][0])
         normalized_query2_ast = further_normalize_ast(query2_ast["definitions"][0])
         # Define output paths for the normalized ASTs
         n1_ast_path = os.path.join(output_dir, "n1_ast.json")

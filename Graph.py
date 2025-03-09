@@ -128,23 +128,19 @@ def visualize_graph(graph, output_image):
     G = nx.DiGraph()
     add_edges_to_graph(G, graph)
 
-    plt.figure(figsize=(20, 16))  # Increased figure size for better spacing
-    pos = nx.spring_layout(G, seed=42, k=0.5)  # Adjust "k" to control node spacing
+    plt.figure(figsize=(20, 8))  # Increased figure size for better spacing
+    pos = nx.shell_layout(G)  # Adjust "k" to control node spacing
 
     nx.draw(
         G,
         pos,
         with_labels=True,
-        node_size=3500,  # Adjusted node size for better visibility
+        node_size=3000,
         node_color="lightblue",
-        font_size=14,
+        font_size=10,
         font_weight="bold",
-        width=2,
-        edge_color="gray",  # Lighter color for edges
-        arrows=True,
-        font_color="black",  # Text color
-        alpha=0.7,  # Slight transparency for clarity
-        style="solid",  # Solid edges for consistency
+        edge_color="gray",
+        arrows=True # Solid edges for consistency
     )
 
     plt.title("Graph Visualization", fontsize=18)
