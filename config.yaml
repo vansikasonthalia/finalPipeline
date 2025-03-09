@@ -1,4 +1,4 @@
-csv_location: "rgeval2.csv"
+csv_location: "processed_data_with_queries.csv"
 overfetching_threshold: 0
 output_dir: "results"
 
