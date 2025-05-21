@@ -1,4 +1,3 @@
-csv_location: "processed_data_with_queries.csv"
+csv_location: "raw_schema.csv"
 overfetching_threshold: 0
 output_dir: "results"
-
