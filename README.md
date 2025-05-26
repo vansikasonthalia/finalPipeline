@@ -14,7 +14,7 @@ pip install pandas graphql-core networkx matplotlib pyyaml
 🏁 How to Run
 Step 1: Preprocess Input CSV
 python preProcessor.py
-This updates raw_schema.csv with: 
+This updates preprocessed_schema.csv with: 
 a. Cleaned GraphQL queries
 b. StepZen-compatible schemas
 
