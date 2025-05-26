@@ -1,3 +1,3 @@
-csv_location: "preprocessed_schema.csv"
+csv_location: "pipeline/preprocessed_schema.csv"
 overfetching_threshold: 0
 output_dir: "results"
