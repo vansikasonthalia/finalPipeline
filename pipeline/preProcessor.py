@@ -177,5 +177,5 @@ df['GT_GQL'] = df['GT_GQL'].apply(strip_operation_name)
 df['extracted_graphql'] = df['extracted_graphql'].apply(strip_operation_name)
 
 # Write output
-output_file_path = 'raw_schema.csv'
+output_file_path = 'preprocessed_schema.csv'
 df.to_csv(output_file_path, index=False)
