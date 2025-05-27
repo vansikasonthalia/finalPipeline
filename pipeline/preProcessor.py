@@ -30,7 +30,7 @@ def strip_operation_name(query):
     )
 
 # Read input CSV
-file_path = 'raw_schema.csv'
+file_path = 'ZeroShot_ibm_granite-20b-code-instruct-op_1164 (1).csv'
 df = pd.read_csv(file_path)
 
 # Extract query text
