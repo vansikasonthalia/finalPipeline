@@ -8,25 +8,93 @@ import logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 
-# Extract GraphQL query from a text blob
-def extract_graphql_query(text):
-    query_pattern = r"""(?:fragment\s+\w+\s+on\s+\w+\s*\{(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\}\s*)*
-    (query|mutation|subscription)\s*\w*\s*\{
-    (?:[^{}]|\.\.\.\w+|\{(?:[^{}]|\{[^{}]*\})*\})*
-    \}"""
-    match = re.search(query_pattern, text, re.DOTALL | re.VERBOSE)
-    if match:
-        return match.group(0)
+# Robust bracket balancing function
+def balance_brackets(text):
+    if pd.isnull(text):
+        return text
+    
+    # Count bracket balance
+    balance = 0
+    in_string = False
+    in_comment = False
+    escape = False
+    stack = []
+    last_char = ''
+    
+    for char in text:
+        if escape:
+            escape = False
+            continue
+        
+        if char == '\\':
+            escape = True
+            continue
+            
+        if in_comment:
+            if char == '\n':
+                in_comment = False
+            continue
+            
+        if in_string:
+            if char == '"' and last_char != '\\':
+                in_string = False
+            continue
+            
+        if char == '"':
+            in_string = True
+        elif char == '#':
+            in_comment = True
+        elif char == '{':
+            balance += 1
+            stack.append(char)
+        elif char == '}':
+            if balance > 0:
+                balance -= 1
+                if stack:
+                    stack.pop()
+            else:
+                # Skip extra closing brackets
+                continue
+                
+        last_char = char
+    
+    # Add missing closing brackets
+    if balance > 0:
+        text += '\n' + '}' * balance
+    
+    return text
+
+# Updated GraphQL extraction with double-wrapping fix
+def extract_graphql_blocks(text):
+    if pd.isnull(text):
+        return None
+        
+    # Pattern to match complete GraphQL operations
+    operation_pattern = r"((?:query|mutation|subscription)\s*(?:\([^)]*\))?\s*{[\s\S]*?})"
+    matches = re.findall(operation_pattern, text, re.IGNORECASE)
+    
+    # If no complete operations found, look for root-level field blocks
+    if not matches:
+        matches = re.findall(r"(\w+\s*(?:\([^)]*\))?\s*{[\s\S]*?})", text)
+    
+    if matches:
+        query_body = '\n'.join(matches)
+        # Check if already starts with an operation keyword
+        if re.match(r'\s*(query|mutation|subscription)\b', query_body, re.IGNORECASE):
+            return query_body
+        return f"query {{\n{query_body}\n}}"
     return None
 
-# Remove operation names (e.g. `query myQuery {` -> `query {`)
+# Improved operation name stripping
 def strip_operation_name(query):
     if pd.isnull(query):
         return query
+    # Remove operation names and parameters while preserving keywords
     return re.sub(
-        r'\b(query|mutation|subscription)\b(?:\s+\w+(?:\s*\([^)]*\))?)\s*{',
+        r'\b(query|mutation|subscription)\b\s+\w+\s*(?:\([^)]*\))?\s*{',
         r'\1 {',
-        query
+        query,
+        flags=re.IGNORECASE
     )
 
 # Read input CSV
@@ -34,10 +102,28 @@ file_path = 'ZeroShot_ibm_granite-20b-code-instruct-op_1164 (1).csv'
 df = pd.read_csv(file_path)
 
 # Extract query text
-df['extracted_graphql'] = df['Generated_GraphQL'].apply(extract_graphql_query)
+df['extracted_graphql'] = df['Generated_GraphQL'].apply(extract_graphql_blocks)
+
+# Fallback extraction if initial fails
+df['extracted_graphql'] = df.apply(
+    lambda row: extract_graphql_blocks(row['Generated_GraphQL']) if pd.isnull(row['extracted_graphql']) else row['extracted_graphql'],
+    axis=1
+)
+
+# Balance brackets in extracted queries
+df['extracted_graphql'] = df['extracted_graphql'].apply(balance_brackets)
+
+# Clean extracted queries
+df['extracted_graphql'] = df['extracted_graphql'].apply(strip_operation_name)
 
 # Reorder schema types based on dependencies
 def reorder_schema(schema: str) -> str:
+    if pd.isnull(schema):
+        return schema
+        
+    # First balance brackets in schema
+    schema = balance_brackets(schema)
+    
     blocks = []
     current_block = []
     for line in schema.split('\n'):
@@ -124,6 +210,9 @@ def reorder_schema(schema: str) -> str:
 
 # Add scalar definitions if used in StepZen
 def preprocess_stepzen_schema(schema: str) -> str:
+    if pd.isnull(schema):
+        return schema
+        
     stepzen_scalars = {
         'Date': 'scalar Date',
         'DateTime': 'scalar DateTime',
@@ -145,20 +234,31 @@ def preprocess_stepzen_schema(schema: str) -> str:
 
 # Merge interface fields into implementing types
 def update_schema(schema_str: str) -> str:
-    schema = build_schema(schema_str)
-    for type_name, type_def in schema.type_map.items():
-        if hasattr(type_def, 'interfaces'):
-            for interface in type_def.interfaces:
-                for field_name, field_def in interface.fields.items():
-                    if field_name not in type_def.fields:
-                        type_def.fields[field_name] = field_def
-    return print_schema(schema)
+    if pd.isnull(schema_str):
+        return schema_str
+        
+    try:
+        schema = build_schema(schema_str)
+        for type_name, type_def in schema.type_map.items():
+            if hasattr(type_def, 'interfaces'):
+                for interface in type_def.interfaces:
+                    for field_name, field_def in interface.fields.items():
+                        if field_name not in type_def.fields:
+                            type_def.fields[field_name] = field_def
+        return print_schema(schema)
+    except Exception as e:
+        logger.warning(f"Error in update_schema: {e}")
+        return schema_str
 
 # Pipeline for schema preprocessing
 def preProcess(schema):
+    if pd.isnull(schema):
+        return schema
+        
     try:
         logger.info("Starting schema processing...")
-        schema2 = reorder_schema(schema)
+        schema1 = balance_brackets(schema)
+        schema2 = reorder_schema(schema1)
         logger.info("Schema reordered..")
         schema3 = preprocess_stepzen_schema(schema2)
         logger.info("scalar preprocessing done")
@@ -175,6 +275,11 @@ df['final_Schema'] = df['Refined_Schema'].apply(preProcess)
 # Apply query cleaning (strip named ops)
 df['GT_GQL'] = df['GT_GQL'].apply(strip_operation_name)
 df['extracted_graphql'] = df['extracted_graphql'].apply(strip_operation_name)
+
+# Balance brackets in final output
+df['final_Schema'] = df['final_Schema'].apply(balance_brackets)
+df['GT_GQL'] = df['GT_GQL'].apply(balance_brackets)
+df['extracted_graphql'] = df['extracted_graphql'].apply(balance_brackets)
 
 # Write output
 output_file_path = 'preprocessed_schema.csv'
